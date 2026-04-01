@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EsMe Solutions · Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <!-- Font Awesome (opcional, para iconos) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #0f0f12; }
+        .sidebar-collapsed { width: 80px; }
+        .sidebar-expanded { width: 260px; }
+        .transition-sidebar { transition: width 0.3s ease; }
+    </style>
+</head>
+<body class="h-screen overflow-hidden">
+    <div class="flex h-full">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="bg-gray-900 text-white flex flex-col transition-sidebar sidebar-expanded">
+            <div class="p-4 flex items-center justify-between border-b border-gray-800">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center">
+                        <span class="text-xl font-bold text-gray-900">ES</span>
+                    </div>
+                    <span id="logoText" class="font-bold text-lg">EsMe Solutions</span>
+                </div>
+                <button id="toggleSidebar" class="text-gray-400 hover:text-white focus:outline-none">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            <nav class="flex-1 mt-6">
+                <ul>
+                    <li>
+                        <button id="misProyectosBtn" class="w-full flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-emerald-400 transition">
+                            <i class="fas fa-folder-open w-6"></i>
+                            <span class="ml-3 sidebar-text">Mis Proyectos</span>
+                        </button>
+                    </li>
+                    <li class="mt-4">
+                        <button id="logoutBtn" class="w-full flex items-center px-4 py-3 text-red-400 hover:bg-gray-800 transition">
+                            <i class="fas fa-sign-out-alt w-6"></i>
+                            <span class="ml-3 sidebar-text">Cerrar Sesión</span>
+                        </button>
+                    </li>
+                </ul>
+            </nav>
+            <div class="p-4 text-xs text-gray-500 border-t border-gray-800">
+                <span class="sidebar-text">v1.0 · EsMe</span>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-auto p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold text-white">Gestión de Computadoras</h1>
+                <button id="newRecordBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-md">
+                    <i class="fas fa-plus"></i> Nuevo Registro
+                </button>
+            </div>
+
+            <!-- Tabla -->
+            <div class="bg-gray-800 rounded-xl overflow-hidden shadow-lg border border-gray-700">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-700">
+                        <thead class="bg-gray-900">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Marca</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Modelo</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Procesador</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">RAM</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody" class="divide-y divide-gray-700">
+                            <!-- Filas cargadas dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal para Nuevo/Editar -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-gray-800 rounded-xl w-full max-w-2xl p-6 border border-gray-700 shadow-2xl">
+            <h2 id="modalTitle" class="text-xl font-bold text-white mb-4">Nueva Computadora</h2>
+            <form id="computerForm" class="space-y-4">
+                <input type="hidden" id="editId" value="">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm text-gray-300">ID</label>
+                        <input type="text" id="id" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-300">Marca</label>
+                        <input type="text" id="marca" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white" required>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-sm text-gray-300">Modelo</label>
+                        <input type="text" id="modelo" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-300">Procesador</label>
+                        <select id="procesador" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white">
+                            <option value="">Seleccione</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-300">RAM</label>
+                        <input type="text" id="ram" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white">
+                    </div>
+                    <!-- Agrega más campos según necesidad -->
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" id="closeModal" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ---------- Session validation and helper ----------
+        const token = sessionStorage.getItem('authToken');
+        let currentNonce = sessionStorage.getItem('authNonce');
+        if (!token || !currentNonce) {
+            window.location.href = '/';
+        }
+
+        async function authenticatedFetch(url, options = {}) {
+            options.method = options.method || 'GET';
+            options.headers = {
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+            const body = options.body ? JSON.parse(options.body) : {};
+            body.token = token;
+            body.nonce = currentNonce;
+            options.body = JSON.stringify(body);
+
+            const response = await fetch(url, options);
+            const data = await response.json();
+
+            if (response.status === 401) {
+                sessionStorage.clear();
+                window.location.href = '/';
+                throw new Error('Sesión expirada');
+            }
+
+            if (response.ok && data.nonce) {
+                currentNonce = data.nonce;
+                sessionStorage.setItem('authNonce', currentNonce);
+            }
+
+            return { response, data };
+        }
+
+        // ---------- Cargar lista de procesadores para el modal ----------
+        async function loadProcesadores() {
+            try {
+                const { data } = await authenticatedFetch('/api/procesadores', { method: 'POST' });
+                const select = document.getElementById('procesador');
+                select.innerHTML = '<option value="">Seleccione</option>';
+                data.procesadores.forEach(nombre => {
+                    const option = document.createElement('option');
+                    option.value = nombre;
+                    option.textContent = nombre;
+                    select.appendChild(option);
+                });
+            } catch (err) {
+                console.error('Error cargando procesadores', err);
+            }
+        }
+
+        // ---------- Cargar tabla ----------
+        async function loadComputadoras() {
+            try {
+                const { data } = await authenticatedFetch('/api/computadoras', { method: 'POST' });
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = '';
+                data.computadoras.forEach(comp => {
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">${escapeHtml(comp.id)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">${escapeHtml(comp.marca)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">${escapeHtml(comp.modelo)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">${escapeHtml(comp.procesador || '')}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">${escapeHtml(comp.ram || '')}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <button class="editBtn text-blue-400 hover:text-blue-300 mr-3" data-id="${comp.id}"><i class="fas fa-edit"></i> Editar</button>
+                            <button class="deleteBtn text-red-400 hover:text-red-300" data-id="${comp.id}"><i class="fas fa-trash-alt"></i> Eliminar</button>
+                        </td>
+                    `;
+                });
+                // Asignar eventos a los botones
+                document.querySelectorAll('.editBtn').forEach(btn => {
+                    btn.addEventListener('click', () => editComputadora(btn.getAttribute('data-id')));
+                });
+                document.querySelectorAll('.deleteBtn').forEach(btn => {
+                    btn.addEventListener('click', () => deleteComputadora(btn.getAttribute('data-id')));
+                });
+            } catch (err) {
+                console.error('Error cargando computadoras', err);
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        // ---------- CRUD ----------
+        async function createComputadora(data) {
+            const { response } = await authenticatedFetch('/api/computadoras', {
+                method: 'POST',
+                body: JSON.stringify({ data })
+            });
+            if (response.ok) {
+                loadComputadoras();
+                closeModal();
+            } else {
+                alert('Error al crear');
+            }
+        }
+
+        async function updateComputadora(id, data) {
+            const { response } = await authenticatedFetch(`/api/computadoras/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ data })
+            });
+            if (response.ok) {
+                loadComputadoras();
+                closeModal();
+            } else {
+                alert('Error al actualizar');
+            }
+        }
+
+        async function deleteComputadora(id) {
+            if (!confirm('¿Eliminar este registro?')) return;
+            const { response } = await authenticatedFetch(`/api/computadoras/${id}`, {
+                method: 'DELETE',
+                body: JSON.stringify({})
+            });
+            if (response.ok) {
+                loadComputadoras();
+            } else {
+                alert('Error al eliminar');
+            }
+        }
+
+        // ---------- Modal logic ----------
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modalTitle');
+        const computerForm = document.getElementById('computerForm');
+        const editIdField = document.getElementById('editId');
+
+        function openModal(isEdit = false, data = null) {
+            modal.classList.remove('hidden');
+            if (isEdit && data) {
+                modalTitle.textContent = 'Editar Computadora';
+                editIdField.value = data.id;
+                document.getElementById('id').value = data.id;
+                document.getElementById('marca').value = data.marca;
+                document.getElementById('modelo').value = data.modelo;
+                document.getElementById('procesador').value = data.procesador || '';
+                document.getElementById('ram').value = data.ram || '';
+            } else {
+                modalTitle.textContent = 'Nueva Computadora';
+                editIdField.value = '';
+                computerForm.reset();
+            }
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+        }
+
+        async function editComputadora(id) {
+            // Cargar los datos actuales de la computadora
+            const { data } = await authenticatedFetch('/api/computadoras', { method: 'POST' });
+            const comp = data.computadoras.find(c => c.id === id);
+            if (comp) {
+                openModal(true, comp);
+            } else {
+                alert('No se encontró el registro');
+            }
+        }
+
+        computerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = {
+                id: document.getElementById('id').value.trim(),
+                marca: document.getElementById('marca').value.trim(),
+                modelo: document.getElementById('modelo').value.trim(),
+                procesador: document.getElementById('procesador').value,
+                ram: document.getElementById('ram').value.trim()
+            };
+            const editId = editIdField.value;
+            if (editId) {
+                await updateComputadora(editId, formData);
+            } else {
+                await createComputadora(formData);
+            }
+        });
+
+        document.getElementById('newRecordBtn').addEventListener('click', () => openModal(false));
+        document.getElementById('closeModal').addEventListener('click', closeModal);
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            sessionStorage.clear();
+            window.location.href = '/';
+        });
+
+        // Sidebar toggle
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('toggleSidebar');
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('sidebar-expanded');
+            sidebar.classList.toggle('sidebar-collapsed');
+            const textSpans = document.querySelectorAll('.sidebar-text');
+            textSpans.forEach(span => {
+                if (sidebar.classList.contains('sidebar-collapsed')) {
+                    span.classList.add('hidden');
+                } else {
+                    span.classList.remove('hidden');
+                }
+            });
+        });
+
+        // "Mis Proyectos" (placeholder)
+        document.getElementById('misProyectosBtn').addEventListener('click', () => {
+            alert('Funcionalidad en desarrollo');
+        });
+
+        // Inicialización
+        loadProcesadores();
+        loadComputadoras();
+    </script>
+</body>
+</html>

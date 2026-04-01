@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EsMe Solutions · Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: radial-gradient(circle at 10% 20%, #0a0f0f, #030707); }
+        .emerald-glow { box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
+        .emerald-focus:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); outline: none; }
+    </style>
+</head>
+<body class="h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-gray-900/80 backdrop-blur-sm rounded-2xl border border-gray-800 p-8 shadow-2xl emerald-glow">
+        <div class="flex justify-center mb-6">
+            <div class="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg">
+                <span class="text-2xl font-bold text-gray-900">ES</span>
+            </div>
+        </div>
+        <h2 class="text-3xl font-bold text-center text-white mb-2">EsMe Solutions</h2>
+        <p class="text-center text-gray-400 text-sm mb-8">Acceso restringido · solo personal autorizado</p>
+
+        <!-- Paso 1: Usuario y contraseña -->
+        <div id="step1">
+            <form id="credsForm" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Usuario</label>
+                    <input type="text" id="username" required
+                           class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 emerald-focus"
+                           placeholder="ej: root">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Contraseña</label>
+                    <input type="password" id="password" required
+                           class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 emerald-focus"
+                           placeholder="••••••••">
+                </div>
+                <button type="submit"
+                        class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-md transition duration-200">
+                    Verificar credenciales
+                </button>
+            </form>
+        </div>
+
+        <!-- Paso 2: Selección de base de datos (oculto inicialmente) -->
+        <div id="step2" class="hidden">
+            <form id="dbForm" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Base de datos</label>
+                    <select id="database" required
+                            class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                        <option value="">Seleccione una base de datos</option>
+                    </select>
+                </div>
+                <button type="submit"
+                        class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-md transition duration-200">
+                    Iniciar sesión
+                </button>
+                <button type="button" id="backBtn"
+                        class="w-full py-2.5 px-4 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg shadow-md transition duration-200">
+                    ← Volver
+                </button>
+            </form>
+        </div>
+
+        <div id="errorMessage" class="mt-4 text-center text-sm text-red-400 hidden"></div>
+        <div class="mt-6 text-center text-xs text-gray-500">Powered by EsMe-Solutions</div>
+    </div>
+
+    <script>
+        let globalUsername = '';
+        let globalPassword = '';
+
+        const step1Div = document.getElementById('step1');
+        const step2Div = document.getElementById('step2');
+        const errorDiv = document.getElementById('errorMessage');
+
+        // Paso 1: Enviar credenciales y obtener lista de bases de datos
+        document.getElementById('credsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorDiv.classList.add('hidden');
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('/api/validate_credentials', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    globalUsername = username;
+                    globalPassword = password;
+                    const select = document.getElementById('database');
+                    select.innerHTML = '<option value="">Seleccione una base de datos</option>';
+                    data.databases.forEach(db => {
+                        const option = document.createElement('option');
+                        option.value = db;
+                        option.textContent = db;
+                        select.appendChild(option);
+                    });
+                    // Cambiar a paso 2
+                    step1Div.classList.add('hidden');
+                    step2Div.classList.remove('hidden');
+                } else {
+                    errorDiv.textContent = data.error || 'Credenciales inválidas';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error(err);
+                errorDiv.textContent = 'Error de conexión con el servidor';
+                errorDiv.classList.remove('hidden');
+            }
+        });
+
+        // Paso 2: Enviar base de datos seleccionada y hacer login final
+        document.getElementById('dbForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorDiv.classList.add('hidden');
+            const database = document.getElementById('database').value;
+
+            if (!database) {
+                errorDiv.textContent = 'Debe seleccionar una base de datos';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: globalUsername,
+                        password: globalPassword,
+                        database: database
+                    })
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    sessionStorage.setItem('authToken', data.token);
+                    sessionStorage.setItem('authNonce', data.nonce);
+                    sessionStorage.setItem('database', data.database);
+                    window.location.href = '/Admin.html';
+                } else {
+                    errorDiv.textContent = data.error || 'Error al iniciar sesión';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error(err);
+                errorDiv.textContent = 'Error de conexión con el servidor';
+                errorDiv.classList.remove('hidden');
+            }
+        });
+
+        // Botón para volver al paso 1
+        document.getElementById('backBtn').addEventListener('click', () => {
+            step1Div.classList.remove('hidden');
+            step2Div.classList.add('hidden');
+            document.getElementById('username').value = globalUsername;
+            document.getElementById('password').value = globalPassword;
+        });
+    </script>
+</body>
+</html>
